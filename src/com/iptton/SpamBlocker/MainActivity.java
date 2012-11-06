@@ -5,12 +5,14 @@ import com.iptton.SpamBlocker.R;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -75,6 +77,10 @@ public class MainActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
+				InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE); 
+				if(imm.isActive()){
+					imm.hideSoftInputFromWindow(editText.getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+				}
 				if(!isShowingSpam){
 					lv.setVisibility(View.VISIBLE);
 					editText.setVisibility(View.GONE);
@@ -99,6 +105,10 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    public void onResume(){
+    	super.onResume();
+    }
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.activity_main, menu);
         return true;
@@ -106,6 +116,12 @@ public class MainActivity extends Activity {
     @Override
     public void onPause(){
     	super.onPause();
+    }
+    @Override
+    public void onDestroy(){
+    	super.onDestroy();
     	db.close();
+    	Log.i(TAG,"onDestroy");
+    	
     }
 }
