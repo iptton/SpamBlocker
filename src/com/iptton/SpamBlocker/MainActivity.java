@@ -3,8 +3,12 @@ package com.iptton.SpamBlocker;
 import com.iptton.SpamBlocker.R;
 
 import android.os.Bundle;
+import android.os.IBinder;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -27,6 +31,7 @@ public class MainActivity extends Activity {
 	Cursor spamCursor;
 
     Boolean isShowingSpam = false;
+    MyReceiver receiver;
 	
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,7 +39,11 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         helper = new DBHelper(this);
         db = helper.getWritableDatabase();
-
+        
+        receiver = new MyReceiver();
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(SMSReceiver.ACTION_UPDATE);
+        this.registerReceiver(receiver, filter);
 		
         lv = (ListView)findViewById(R.id.blackList);
         editText = (EditText)findViewById(R.id.editText2);
@@ -46,7 +55,7 @@ public class MainActivity extends Activity {
 		Log.i(TAG,"indexof h = "+indexOfH);
         
         editText.setText("");
-        String[] numbers = DBHelper.getNumbers(db);
+        String[] numbers = helper.getNumbers();
         for(int i=0;i<numbers.length;++i){
         	editText.append(numbers[i]+"\n");
         }
@@ -57,7 +66,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				String str = editText.getText().toString();
-				DBHelper.saveRules(db,str);
+				helper.saveRules(str, null);
 			}
         	
         });
@@ -85,7 +94,7 @@ public class MainActivity extends Activity {
         	
         });
         
-        spamCursor = db.query(DBHelper.TB_SPAM_NAME, null, null, null, null, null, null);//helper.getSpamMessage(db);
+        spamCursor = helper.select(DBHelper.TB_SPAM_NAME);
         startManagingCursor(spamCursor);
         SimpleCursorAdapter adapter = new SimpleCursorAdapter(this,
         		android.R.layout.simple_list_item_2,
@@ -113,7 +122,24 @@ public class MainActivity extends Activity {
     public void onDestroy(){
     	super.onDestroy();
     	db.close();
+    	unregisterReceiver(receiver);
     	Log.i(TAG,"onDestroy");
     	
     }
+    public void updateListView(){
+    	spamCursor.requery();
+    	lv.invalidate();
+    }
+    
+    public class MyReceiver extends BroadcastReceiver{
+		@Override
+    	public void onReceive(Context context, Intent intent){
+			Bundle bundle = intent.getExtras();
+			String action = bundle.getString(SMSReceiver.KEY_ACTION);
+			if(action.equals(SMSReceiver.UPDATE)){
+				updateListView();
+			}
+		}
+    }
+    
 }

@@ -13,7 +13,7 @@ public class DBHelper extends SQLiteOpenHelper {
 	public static final String MESSAGE_BODY = "message_body";
 	public static final String ID = "_id";
 	public static final String NUMBER = "phone_number";
-	public static final int VERSION = 12;
+	public static final int VERSION = 15;
 	public static final String DB_NAME = "smsblocker.db";
 	public static final String DEFAULT_SPAM_RULES = "10010.{3}\n.{3}10010";
 
@@ -28,7 +28,7 @@ public class DBHelper extends SQLiteOpenHelper {
 		db.execSQL("CREATE TABLE IF NOT EXISTS " + TB_SPAM_NAME + " (" + ID
 				+ " INT PRIMARY KEY," + SENDER + " VARCHAR," + MESSAGE_BODY
 				+ " VARCHAR," + NUMBER + " VARCHAR);");
-		DBHelper.saveRules(db, DEFAULT_SPAM_RULES);
+		this.saveRules(DEFAULT_SPAM_RULES,db);
 	}
 
 	@Override
@@ -39,7 +39,13 @@ public class DBHelper extends SQLiteOpenHelper {
 		onCreate(db);
 	}
 
-	public static String[] getNumbers(SQLiteDatabase db) {
+	public Cursor select(String table){
+		Cursor cursor = this.getReadableDatabase().query(table, null, null, null, null, null, null);
+		return cursor;
+	}
+	
+	public String[] getNumbers() {
+		SQLiteDatabase db = this.getReadableDatabase();
 		Cursor c = db.query(DBHelper.TB_NAME, null, null, null, null, null,
 				null);
 		final int ci = c.getColumnIndexOrThrow(DBHelper.NUMBER);
@@ -54,7 +60,10 @@ public class DBHelper extends SQLiteOpenHelper {
 		return numbers;
 	}
 
-	public static void saveRules(SQLiteDatabase db, String str) {
+	public void saveRules(String str,SQLiteDatabase db) {
+		if(db == null){
+			db = this.getWritableDatabase();
+		}
 		str = str.trim();
 		String[] numbers = str.split("\n");
 		db.execSQL("DELETE FROM " + DBHelper.TB_NAME);
@@ -66,15 +75,18 @@ public class DBHelper extends SQLiteOpenHelper {
 		}
 	}
 
-	public static void saveSpamMessage(SQLiteDatabase db, String sender, String msg) {
+	public void saveSpamMessage(String sender, String msg) {
+		SQLiteDatabase db = this.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(SENDER, sender);
 		values.put(MESSAGE_BODY, msg);
 		db.insertWithOnConflict(DBHelper.TB_SPAM_NAME, DBHelper.ID, values,
 				SQLiteDatabase.CONFLICT_REPLACE);
+		db.close();
 	}
 
-	public static Cursor getSpamMessage(SQLiteDatabase db) {
+	public Cursor getSpamMessage() {
+		SQLiteDatabase db = this.getReadableDatabase();
 		Cursor c = db.query(DBHelper.TB_SPAM_NAME, null, null, null, null,
 				null, null);
 		return c;
