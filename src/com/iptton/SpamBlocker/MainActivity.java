@@ -49,11 +49,6 @@ public class MainActivity extends Activity {
         editText = (EditText)findViewById(R.id.editText2);
         
         
-        String t[] = new String[1];
-        t[0] = "h";
-		int indexOfH = java.util.Arrays.asList(t).indexOf("h");
-		Log.i(TAG,"indexof h = "+indexOfH);
-        
         editText.setText("");
         String[] numbers = helper.getNumbers();
         for(int i=0;i<numbers.length;++i){
@@ -121,6 +116,7 @@ public class MainActivity extends Activity {
     @Override
     public void onDestroy(){
     	super.onDestroy();
+    	this.stopManagingCursor(spamCursor);
     	db.close();
     	unregisterReceiver(receiver);
     	Log.i(TAG,"onDestroy");
