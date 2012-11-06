@@ -4,7 +4,6 @@ import com.iptton.SpamBlocker.R;
 
 import android.os.Bundle;
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -47,7 +46,7 @@ public class MainActivity extends Activity {
 		Log.i(TAG,"indexof h = "+indexOfH);
         
         editText.setText("");
-        String[] numbers = helper.getNumbers(db);
+        String[] numbers = DBHelper.getNumbers(db);
         for(int i=0;i<numbers.length;++i){
         	editText.append(numbers[i]+"\n");
         }
@@ -58,14 +57,7 @@ public class MainActivity extends Activity {
 			@Override
 			public void onClick(View v) {
 				String str = editText.getText().toString();
-				str = str.trim();
-				String[] numbers = str.split("\n");
-				db.execSQL("DELETE FROM " + DBHelper.TB_NAME);
-				for(int i=0;i<numbers.length;++i){
-					ContentValues values = new ContentValues();
-			        values.put(DBHelper.NUMBER, numbers[i]);
-			        db.insertWithOnConflict(DBHelper.TB_NAME, DBHelper.ID, values,SQLiteDatabase.CONFLICT_REPLACE);
-				}
+				DBHelper.saveRules(db,str);
 			}
         	
         });

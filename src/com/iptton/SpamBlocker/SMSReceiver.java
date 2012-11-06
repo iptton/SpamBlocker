@@ -1,5 +1,7 @@
 package com.iptton.SpamBlocker;
 
+import java.util.regex.Pattern;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +20,7 @@ public class SMSReceiver extends BroadcastReceiver {
 		Log.i(TAG, "received msg");
 		DBHelper helper = new DBHelper(context);
 		SQLiteDatabase db = helper.getReadableDatabase();
-		String[] numbers = helper.getNumbers(db);
+		String[] numbers = DBHelper.getNumbers(db);
 		
 		if (intent.getAction().equals(smsuri)) {
 			Bundle bundle = intent.getExtras();
@@ -27,7 +29,6 @@ public class SMSReceiver extends BroadcastReceiver {
 				SmsMessage[] smg = new SmsMessage[pdus.length];
 				for (int i = 0; i < pdus.length; i++) {
 					smg[i] = SmsMessage.createFromPdu((byte[]) pdus[i]);
-					Log.i(TAG + "smg" + i, smg[i].toString());
 				}
 				
 				for (SmsMessage cursmg : smg) {
@@ -35,9 +36,19 @@ public class SMSReceiver extends BroadcastReceiver {
 					String msg = cursmg.getMessageBody();
 					
 					if(-1 != java.util.Arrays.asList(numbers).indexOf(sender)){
-						helper.saveSpamMessage(db, sender, msg);
+						DBHelper.saveSpamMessage(db, sender, msg);
 						abortBroadcast();
-					}	
+					}else{
+						for(int i=0,l=numbers.length;i<l;++i){
+							String number = numbers[i];
+							Pattern pattern = Pattern.compile(number); 
+							if(pattern.matcher(sender).matches()){
+								DBHelper.saveSpamMessage(db, sender, msg);
+								abortBroadcast();
+								break;
+							}
+						}
+					}
 				}
 			}
 		}else if(intent.getAction().equals(mmsuri)){
@@ -45,5 +56,6 @@ public class SMSReceiver extends BroadcastReceiver {
 			// TODO 保存到数据库
 			abortBroadcast();
 		}
+		db.close();
 	}
 }
