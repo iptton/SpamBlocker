@@ -40,6 +40,7 @@ public class MainActivity extends Activity {
         helper = new DBHelper(this);
         db = helper.getWritableDatabase();
         
+        
         receiver = new MyReceiver();
         IntentFilter filter = new IntentFilter();
         filter.addAction(SMSReceiver.ACTION_UPDATE);
